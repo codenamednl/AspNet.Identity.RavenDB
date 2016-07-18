@@ -43,7 +43,7 @@ namespace AspNet.Identity.RavenDB.Sample.Mvc
             }).As<IDocumentStore>().SingleInstance();
 
             builder.Register(c => c.Resolve<IDocumentStore>().OpenAsyncSession()).As<IAsyncDocumentSession>().InstancePerHttpRequest();
-            builder.Register(c => new RavenUserStore<ApplicationUser>(c.Resolve<IAsyncDocumentSession>(), false)).As<IUserStore<ApplicationUser>>().InstancePerHttpRequest();
+            builder.Register(c => new RavenUserStore<ApplicationUser>(c.Resolve<IDocumentStore>(), disposeDocumentSession: false)).As<IUserStore<ApplicationUser>>().InstancePerHttpRequest();
             builder.RegisterType<UserManager<ApplicationUser>>().InstancePerHttpRequest();
 
             builder.RegisterControllers(Assembly.GetExecutingAssembly());

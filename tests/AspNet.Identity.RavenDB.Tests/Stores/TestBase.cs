@@ -8,7 +8,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
     {
         protected internal IDocumentStore CreateEmbeddableStore()
         {
-            EmbeddableDocumentStore store = new EmbeddableDocumentStore
+            var store = new EmbeddableDocumentStore
             {
                 Configuration =
                 {
@@ -16,6 +16,8 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                     RunInMemory = true,
                 }
             };
+
+            store.Configuration.Storage.Voron.AllowOn32Bits = true;
 
             store.Initialize();
             store.RegisterListener(new NoStaleQueriesListener());

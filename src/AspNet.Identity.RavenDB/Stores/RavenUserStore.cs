@@ -14,12 +14,9 @@ namespace AspNet.Identity.RavenDB.Stores
         readonly bool _disposeDocumentSession;
         protected IAsyncDocumentSession _documentSession;
         readonly IDocumentStore _documentStore;
-        string _databaseName;
-
-        public RavenUserStore(IDocumentStore documentStore, string databaseName) : this(documentStore, databaseName, true)
-        {}
-
-        public RavenUserStore(IDocumentStore documentStore, string databaseName, bool disposeDocumentSession)
+        readonly string _databaseName;
+        
+        public RavenUserStore(IDocumentStore documentStore, string databaseName = "", bool disposeDocumentSession = true)
         {
             if (documentStore == null)
             {
@@ -57,8 +54,7 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult<IList<Claim>>(user.Claims.Select(clm => new Claim(clm.ClaimType, clm.ClaimValue))
-                .ToList());
+            return Task.FromResult<IList<Claim>>(user.Claims.Select(clm => new Claim(clm.ClaimType, clm.ClaimValue)).ToList());
         }
 
         public Task AddClaimAsync(TUser user, Claim claim)

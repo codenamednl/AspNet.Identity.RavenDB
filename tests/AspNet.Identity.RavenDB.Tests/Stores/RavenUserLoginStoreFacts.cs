@@ -2,10 +2,7 @@
 using AspNet.Identity.RavenDB.Stores;
 using Microsoft.AspNet.Identity;
 using Raven.Client;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -25,7 +22,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(ses);
+                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(store);
                     RavenUser user = new RavenUser(userName);
                     await ses.StoreAsync(user);
                     await ses.SaveChangesAsync();
@@ -34,7 +31,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(ses);
+                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(store);
                     RavenUser user = await ses.LoadAsync<RavenUser>(RavenUser.GenerateKey(userName));
 
                     // Act
@@ -62,7 +59,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(ses);
+                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(store);
                     UserManager<RavenUser> userManager = new UserManager<RavenUser>(userStore);
 
                     RavenUser user = new RavenUser(userName);
@@ -75,7 +72,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(ses);
+                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(store);
                     RavenUser user = await ses.LoadAsync<RavenUser>(RavenUser.GenerateKey(userName));
                     RavenUserLogin foundLogin = await ses.LoadAsync<RavenUserLogin>(RavenUserLogin.GenerateKey(loginProvider, providerKey));
 
@@ -99,7 +96,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(ses);
+                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(store);
                     RavenUser user = new RavenUser(userName);
                     RavenUserLogin userLogin = new RavenUserLogin(user.Id, new UserLoginInfo(loginProvider, providerKey));
                     user.AddLogin(userLogin);
@@ -111,7 +108,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 using (IAsyncDocumentSession ses = store.OpenAsyncSession())
                 {
                     ses.Advanced.UseOptimisticConcurrency = true;
-                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(ses);
+                    IUserLoginStore<RavenUser, string> userLoginStore = new RavenUserStore<RavenUser>(store);
 
                     // Act
                     UserLoginInfo loginInfo = new UserLoginInfo(loginProvider, providerKey);

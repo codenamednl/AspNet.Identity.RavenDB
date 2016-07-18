@@ -8,7 +8,7 @@ namespace AspNet.Identity.RavenDB.Entities
     {
         public RavenUserClaim(Claim claim)
         {
-            if (claim == null) throw new ArgumentNullException("claim");
+            if (claim == null) throw new ArgumentNullException("cl" + "aim");
 
             ClaimType = claim.Type;
             ClaimValue = claim.Value;

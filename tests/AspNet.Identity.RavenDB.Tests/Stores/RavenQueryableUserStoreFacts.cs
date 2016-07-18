@@ -26,17 +26,17 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                     await ses.SaveChangesAsync();
                 }
 
-                using (IAsyncDocumentSession ses = store.OpenAsyncSession())
-                {
+                //using (IAsyncDocumentSession ses = store.OpenAsyncSession())
+                //{
                     // Act
-                    ses.Advanced.UseOptimisticConcurrency = true;
-                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(ses);
+                    //ses.Advanced.UseOptimisticConcurrency = true;
+                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(store);
                     RavenUser retrievedUser = await userStore.Users.FirstOrDefaultAsync(user => user.UserName == userNameToSearch);
 
                     // Assert
                     Assert.NotNull(retrievedUser);
                     Assert.Equal(userNameToSearch, retrievedUser.UserName);
-                }
+                //}
             }
         }
     }
