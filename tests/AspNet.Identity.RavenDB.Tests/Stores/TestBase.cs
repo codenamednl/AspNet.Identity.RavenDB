@@ -1,13 +1,12 @@
 ﻿using Raven.Client;
 using Raven.Client.Embedded;
-using Raven.Client.Indexes;
 using Raven.Client.Listeners;
 
 namespace AspNet.Identity.RavenDB.Tests.Stores
 {
     public abstract class TestBase
     {
-        internal protected IDocumentStore CreateEmbeddableStore()
+        protected internal IDocumentStore CreateEmbeddableStore()
         {
             EmbeddableDocumentStore store = new EmbeddableDocumentStore
             {

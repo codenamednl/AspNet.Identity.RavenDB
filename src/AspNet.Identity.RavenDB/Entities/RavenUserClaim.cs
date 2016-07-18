@@ -17,8 +17,8 @@ namespace AspNet.Identity.RavenDB.Entities
         [JsonConstructor]
         public RavenUserClaim(string claimType, string claimValue)
         {
-            if (claimType == null) throw new ArgumentNullException("claimType");
-            if (claimValue == null) throw new ArgumentNullException("claimValue");
+            if (claimType == null) throw new ArgumentNullException(nameof(claimType));
+            if (claimValue == null) throw new ArgumentNullException(nameof(claimValue));
 
             ClaimType = claimType;
             ClaimValue = claimValue;
