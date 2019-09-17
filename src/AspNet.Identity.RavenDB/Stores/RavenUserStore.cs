@@ -30,6 +30,7 @@ namespace AspNet.Identity.RavenDB.Stores
 
             _databaseName = databaseName;
             _documentStore = documentStore;
+            _documentStore.Conventions.AllowQueriesOnId = true;
             OpenAsyncSession();
 
             _disposeDocumentSession = disposeDocumentSession;
@@ -96,11 +97,16 @@ namespace AspNet.Identity.RavenDB.Stores
 
             var keyToLookFor = RavenUserEmail.GenerateKey(email);
 
-            var ravenUserEmail = await _documentSession.Include<RavenUserEmail, TUser>(usrEmail => usrEmail.UserId)
-                .LoadAsync(keyToLookFor)
+            //var ravenUserEmail = await _documentSession.Include<RavenUserEmail, TUser>(usrEmail => usrEmail.UserId)
+            //    .LoadAsync(keyToLookFor)
+            //    .ConfigureAwait(false);
+
+            var ravenUserEmail = await _documentSession.Query<RavenUserEmail>()
+                .Include<RavenUserEmail, TUser>(usrEmail => usrEmail.UserId)
+                .SingleOrDefaultAsync(rue => rue.Id == keyToLookFor)
                 .ConfigureAwait(false);
 
-            return ravenUserEmail != null ? await _documentSession.LoadAsync<TUser>(ravenUserEmail.UserId)
+            return ravenUserEmail != null ? await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == ravenUserEmail.UserId) //.LoadAsync<TUser>(ravenUserEmail.UserId)
                 .ConfigureAwait(false) : default(TUser);
         }
 
@@ -277,11 +283,16 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new ArgumentNullException(nameof(login));
 
             var keyToLookFor = RavenUserLogin.GenerateKey(login.LoginProvider, login.ProviderKey);
-            var ravenUserLogin = await _documentSession.Include<RavenUserLogin, TUser>(usrLogin => usrLogin.UserId)
-                .LoadAsync(keyToLookFor)
+            //var ravenUserLogin = await _documentSession.Include<RavenUserLogin, TUser>(usrLogin => usrLogin.UserId)
+            //    .LoadAsync(keyToLookFor)
+            //    .ConfigureAwait(false);
+
+            var ravenUserLogin = await _documentSession.Query<RavenUserLogin>()
+                .Include<RavenUserLogin, TUser>(usrLogin => usrLogin.UserId)
+                .SingleOrDefaultAsync(rul => rul.Id == keyToLookFor)
                 .ConfigureAwait(false);
 
-            return ravenUserLogin != null ? await _documentSession.LoadAsync<TUser>(ravenUserLogin.UserId)
+            return ravenUserLogin != null ? await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == ravenUserLogin.UserId) //.LoadAsync<TUser>(ravenUserLogin.UserId)
                 .ConfigureAwait(false) : default(TUser);
         }
 
@@ -293,8 +304,8 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new ArgumentNullException(nameof(login));
 
             var ravenUserLogin = new RavenUserLogin(user.Id, login);
-            await _documentSession.StoreAsync(ravenUserLogin)
-                .ConfigureAwait(false);
+            await _documentSession.StoreAsync(ravenUserLogin).ConfigureAwait(false);
+
             user.AddLogin(ravenUserLogin);
         }
 
@@ -306,8 +317,9 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new ArgumentNullException(nameof(login));
 
             var keyToLookFor = RavenUserLogin.GenerateKey(login.LoginProvider, login.ProviderKey);
-            var ravenUserLogin = await _documentSession.LoadAsync<RavenUserLogin>(keyToLookFor)
-                .ConfigureAwait(false);
+            //var ravenUserLogin = await _documentSession.LoadAsync<RavenUserLogin>(keyToLookFor).ConfigureAwait(false);
+            var ravenUserLogin = await _documentSession.Query<RavenUserLogin>().SingleOrDefaultAsync(u => u.Id == keyToLookFor).ConfigureAwait(false);
+
             if (ravenUserLogin != null)
             {
                 _documentSession.Delete(ravenUserLogin);
@@ -459,10 +471,8 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new InvalidOperationException("Cannot create user as the 'UserName' property is null on user parameter.");
             }
 
-            await _documentSession.StoreAsync(user)
-                .ConfigureAwait(false);
-            await _documentSession.SaveChangesAsync()
-                .ConfigureAwait(false);
+            await _documentSession.StoreAsync(user).ConfigureAwait(false);
+            await _documentSession.SaveChangesAsync().ConfigureAwait(false);
         }
 
         public Task<TUser> FindByIdAsync(string userId)
@@ -470,7 +480,8 @@ namespace AspNet.Identity.RavenDB.Stores
             if (userId == null)
                 throw new ArgumentNullException(nameof(userId));
 
-            return _documentSession.LoadAsync<TUser>(userId);
+            return _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == userId);
+            //return _documentSession.LoadAsync<TUser>(userId);
         }
 
         public Task<TUser> FindByNameAsync(string userName)
@@ -480,7 +491,8 @@ namespace AspNet.Identity.RavenDB.Stores
 
             OpenAsyncSession();
 
-            return _documentSession.LoadAsync<TUser>(RavenUser.GenerateKey(userName));
+            return _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == RavenUser.GenerateKey(userName));
+            //return _documentSession.LoadAsync<TUser>(RavenUser.GenerateKey(userName));
         }
 
         /// <remarks>
@@ -558,27 +570,27 @@ namespace AspNet.Identity.RavenDB.Stores
         Task<RavenUserEmail> GetUserEmailAsync(string email)
         {
             var keyToLookFor = RavenUserEmail.GenerateKey(email);
-            return _documentSession.LoadAsync<RavenUserEmail>(keyToLookFor);
+            //return _documentSession.LoadAsync<RavenUserEmail>(keyToLookFor);
+            return _documentSession.Query<RavenUserEmail>().SingleOrDefaultAsync(u => u.Id == keyToLookFor);
         }
 
         Task<RavenUserPhoneNumber> GetUserPhoneNumberAsync(string phoneNumber)
         {
             var keyToLookFor = RavenUserPhoneNumber.GenerateKey(phoneNumber);
-            return _documentSession.LoadAsync<RavenUserPhoneNumber>(keyToLookFor);
+            //return _documentSession.LoadAsync<RavenUserPhoneNumber>(keyToLookFor);
+            return _documentSession.Query<RavenUserPhoneNumber>().SingleOrDefaultAsync(u => u.Id == keyToLookFor);
         }
 
         async Task<ConfirmationRecord> GetUserEmailConfirmationAsync(string email)
         {
-            var userEmail = await GetUserEmailAsync(email)
-                .ConfigureAwait(false);
+            var userEmail = await GetUserEmailAsync(email).ConfigureAwait(false);
 
             return userEmail?.ConfirmationRecord;
         }
 
         async Task<ConfirmationRecord> GetUserPhoneNumberConfirmationAsync(string phoneNumber)
         {
-            var userPhoneNumber = await GetUserPhoneNumberAsync(phoneNumber)
-                .ConfigureAwait(false);
+            var userPhoneNumber = await GetUserPhoneNumberAsync(phoneNumber).ConfigureAwait(false);
 
             return userPhoneNumber?.ConfirmationRecord;
         }
