@@ -16,20 +16,10 @@ namespace AspNet.Identity.RavenDB.Stores
         readonly IDocumentStore _documentStore;
         readonly string _databaseName;
         
-        public RavenUserStore(IDocumentStore documentStore, string databaseName = "", bool disposeDocumentSession = true)
+        public RavenUserStore(IDocumentStore documentStore, string databaseName, bool disposeDocumentSession = true)
         {
-            if (documentStore == null)
-            {
-                throw new ArgumentNullException(nameof(documentStore));
-            }
-
-            //if (documentStore.Advanced.UseOptimisticConcurrency == false)
-            //{
-            //    throw new NotSupportedException("Optimistic concurrency disabled 'IAsyncDocumentSession' instance is not supported because the uniqueness of the username and the e-mail needs to ensured. Please enable optimistic concurrency by setting the 'Advanced.UseOptimisticConcurrency' property on the 'IAsyncDocumentSession' instance and leave the optimistic concurrency enabled on the session till the end of its lifetime. Otherwise, you will have a chance of ending up overriding an existing user's data if a new user tries to register with the username of that existing user.");
-            //}
-
             _databaseName = databaseName;
-            _documentStore = documentStore;
+            _documentStore = documentStore ?? throw new ArgumentNullException(nameof(documentStore));
             _documentStore.Conventions.AllowQueriesOnId = true;
             OpenAsyncSession();
 
@@ -48,17 +38,17 @@ namespace AspNet.Identity.RavenDB.Stores
 
         // IUserClaimStore
 
-        public Task<IList<Claim>> GetClaimsAsync(TUser user)
+        public async Task<IList<Claim>> GetClaimsAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult<IList<Claim>>(user.Claims.Select(clm => new Claim(clm.ClaimType, clm.ClaimValue)).ToList());
+            return await Task.FromResult<IList<Claim>>(user.Claims.Select(clm => new Claim(clm.ClaimType, clm.ClaimValue)).ToList());
         }
 
-        public Task AddClaimAsync(TUser user, Claim claim)
+        public async Task AddClaimAsync(TUser user, Claim claim)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -66,10 +56,10 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new ArgumentNullException(nameof(claim));
 
             user.AddClaim(claim);
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
-        public Task RemoveClaimAsync(TUser user, Claim claim)
+        public async Task RemoveClaimAsync(TUser user, Claim claim)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -83,7 +73,7 @@ namespace AspNet.Identity.RavenDB.Stores
                 user.RemoveClaim(userClaim);
             }
 
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
         // IUserEmailStore
@@ -107,17 +97,17 @@ namespace AspNet.Identity.RavenDB.Stores
                 .ConfigureAwait(false);
 
             return ravenUserEmail != null ? await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == ravenUserEmail.UserId) //.LoadAsync<TUser>(ravenUserEmail.UserId)
-                .ConfigureAwait(false) : default(TUser);
+                .ConfigureAwait(false) : default;
         }
 
-        public Task<string> GetEmailAsync(TUser user)
+        public async Task<string> GetEmailAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.Email);
+            return await Task.FromResult(user.Email);
         }
 
         public async Task<bool> GetEmailConfirmedAsync(TUser user)
@@ -132,13 +122,12 @@ namespace AspNet.Identity.RavenDB.Stores
                 throw new InvalidOperationException("Cannot get the confirmation status of the e-mail because user doesn't have an e-mail.");
             }
 
-            var confirmation = await GetUserEmailConfirmationAsync(user.Email)
-                .ConfigureAwait(false);
+            var confirmation = await GetUserEmailConfirmationAsync(user.Email).ConfigureAwait(false);
 
             return confirmation != null;
         }
 
-        public Task SetEmailAsync(TUser user, string email)
+        public async Task SetEmailAsync(TUser user, string email)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -148,7 +137,7 @@ namespace AspNet.Identity.RavenDB.Stores
             user.SetEmail(email);
             var ravenUserEmail = new RavenUserEmail(email, user.Id);
 
-            return _documentSession.StoreAsync(ravenUserEmail);
+            await _documentSession.StoreAsync(ravenUserEmail);
         }
 
         public async Task SetEmailConfirmedAsync(TUser user, bool confirmed)
@@ -182,17 +171,17 @@ namespace AspNet.Identity.RavenDB.Stores
 
         // IUserLockoutStore
 
-        public Task<DateTimeOffset> GetLockoutEndDateAsync(TUser user)
+        public async Task<DateTimeOffset> GetLockoutEndDateAsync(TUser user)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
             if (user.LockoutEndDate == null)
                 throw new InvalidOperationException("LockoutEndDate has no value.");
 
-            return Task.FromResult(user.LockoutEndDate.Value);
+            return await Task.FromResult(user.LockoutEndDate.Value);
         }
 
-        public Task SetLockoutEndDateAsync(TUser user, DateTimeOffset lockoutEnd)
+        public async Task SetLockoutEndDateAsync(TUser user, DateTimeOffset lockoutEnd)
         {
             if (user == null)
             {
@@ -200,10 +189,10 @@ namespace AspNet.Identity.RavenDB.Stores
             }
 
             user.LockUntil(lockoutEnd);
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
-        public Task<int> IncrementAccessFailedCountAsync(TUser user)
+        public async Task<int> IncrementAccessFailedCountAsync(TUser user)
         {
             if (user == null)
             {
@@ -213,10 +202,10 @@ namespace AspNet.Identity.RavenDB.Stores
             // NOTE: Not confortable to do this like below but this will work out for the intended scenario
             //       + RavenDB doesn't have a reliable solution for $inc update as MongoDB does.
             user.IncrementAccessFailedCount();
-            return Task.FromResult(user.AccessFailedCount);
+            return await Task.FromResult(user.AccessFailedCount);
         }
 
-        public Task ResetAccessFailedCountAsync(TUser user)
+        public async Task ResetAccessFailedCountAsync(TUser user)
         {
             if (user == null)
             {
@@ -224,30 +213,30 @@ namespace AspNet.Identity.RavenDB.Stores
             }
 
             user.ResetAccessFailedCount();
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
-        public Task<int> GetAccessFailedCountAsync(TUser user)
+        public async Task<int> GetAccessFailedCountAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.AccessFailedCount);
+            return await Task.FromResult(user.AccessFailedCount);
         }
 
-        public Task<bool> GetLockoutEnabledAsync(TUser user)
+        public async Task<bool> GetLockoutEnabledAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.IsLockoutEnabled);
+            return await Task.FromResult(user.IsLockoutEnabled);
         }
 
-        public Task SetLockoutEnabledAsync(TUser user, bool enabled)
+        public async Task SetLockoutEnabledAsync(TUser user, bool enabled)
         {
             if (user == null)
             {
@@ -263,17 +252,17 @@ namespace AspNet.Identity.RavenDB.Stores
                 user.DisableLockout();
             }
 
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
         // IUserLoginStore
 
-        public Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user)
+        public async Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
 
-            return Task.FromResult<IList<UserLoginInfo>>(user.Logins.Select(login => new UserLoginInfo(login.LoginProvider, login.ProviderKey))
+            return await Task.FromResult<IList<UserLoginInfo>>(user.Logins.Select(login => new UserLoginInfo(login.LoginProvider, login.ProviderKey))
                 .ToList());
         }
 
@@ -293,7 +282,7 @@ namespace AspNet.Identity.RavenDB.Stores
                 .ConfigureAwait(false);
 
             return ravenUserLogin != null ? await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == ravenUserLogin.UserId) //.LoadAsync<TUser>(ravenUserLogin.UserId)
-                .ConfigureAwait(false) : default(TUser);
+                .ConfigureAwait(false) : default;
         }
 
         public async Task AddLoginAsync(TUser user, UserLoginInfo login)
@@ -334,27 +323,27 @@ namespace AspNet.Identity.RavenDB.Stores
 
         // IUserPasswordStore
 
-        public Task<string> GetPasswordHashAsync(TUser user)
+        public async Task<string> GetPasswordHashAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.PasswordHash);
+            return await Task.FromResult(user.PasswordHash);
         }
 
-        public Task<bool> HasPasswordAsync(TUser user)
+        public async Task<bool> HasPasswordAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.PasswordHash != null);
+            return await Task.FromResult(user.PasswordHash != null);
         }
 
-        public Task SetPasswordHashAsync(TUser user, string passwordHash)
+        public async Task SetPasswordHashAsync(TUser user, string passwordHash)
         {
             if (user == null)
             {
@@ -362,19 +351,19 @@ namespace AspNet.Identity.RavenDB.Stores
             }
 
             user.SetPasswordHash(passwordHash);
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
         // IUserPhoneNumberStore
 
-        public Task<string> GetPhoneNumberAsync(TUser user)
+        public async Task<string> GetPhoneNumberAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.PhoneNumber);
+            return await Task.FromResult(user.PhoneNumber);
         }
 
         public async Task<bool> GetPhoneNumberConfirmedAsync(TUser user)
@@ -395,7 +384,7 @@ namespace AspNet.Identity.RavenDB.Stores
             return confirmation != null;
         }
 
-        public Task SetPhoneNumberAsync(TUser user, string phoneNumber)
+        public async Task SetPhoneNumberAsync(TUser user, string phoneNumber)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -405,7 +394,7 @@ namespace AspNet.Identity.RavenDB.Stores
             user.SetPhoneNumber(phoneNumber);
             var ravenUserPhoneNumber = new RavenUserPhoneNumber(phoneNumber, user.Id);
 
-            return _documentSession.StoreAsync(ravenUserPhoneNumber);
+            await _documentSession.StoreAsync(ravenUserPhoneNumber);
         }
 
         public async Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed)
@@ -439,19 +428,19 @@ namespace AspNet.Identity.RavenDB.Stores
 
         // IUserSecurityStampStore
 
-        public Task<string> GetSecurityStampAsync(TUser user)
+        public async Task<string> GetSecurityStampAsync(TUser user)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
-            return Task.FromResult(user.SecurityStamp);
+            return await Task.FromResult(user.SecurityStamp);
         }
 
-        public Task SetSecurityStampAsync(TUser user, string stamp)
+        public async Task SetSecurityStampAsync(TUser user, string stamp)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
             user.SetSecurityStamp(stamp);
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
         // IUserStore
@@ -475,23 +464,26 @@ namespace AspNet.Identity.RavenDB.Stores
             await _documentSession.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public Task<TUser> FindByIdAsync(string userId)
+        public async Task<TUser> FindByIdAsync(string userId)
         {
             if (userId == null)
                 throw new ArgumentNullException(nameof(userId));
 
-            return _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == userId);
+            return await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == userId);
             //return _documentSession.LoadAsync<TUser>(userId);
         }
 
-        public Task<TUser> FindByNameAsync(string userName)
+        public async Task<TUser> FindByNameAsync(string userName)
         {
             if (userName == null)
                 throw new ArgumentNullException(nameof(userName));
 
             OpenAsyncSession();
 
-            return _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == RavenUser.GenerateKey(userName));
+            var key = RavenUser.GenerateKey(userName);
+            var user = await _documentSession.Query<TUser>().SingleOrDefaultAsync(u => u.Id == key);
+
+            return user;
             //return _documentSession.LoadAsync<TUser>(RavenUser.GenerateKey(userName));
         }
 
@@ -499,17 +491,17 @@ namespace AspNet.Identity.RavenDB.Stores
         ///     This method assumes that incomming TUser parameter is tracked in the session. So, this method literally behaves as
         ///     SaveChangeAsync
         /// </remarks>
-        public Task UpdateAsync(TUser user)
+        public async Task UpdateAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return _documentSession.SaveChangesAsync();
+            await _documentSession.SaveChangesAsync();
         }
 
-        public Task DeleteAsync(TUser user)
+        public async Task DeleteAsync(TUser user)
         {
             if (user == null)
             {
@@ -517,7 +509,7 @@ namespace AspNet.Identity.RavenDB.Stores
             }
 
             _documentSession.Delete(user);
-            return _documentSession.SaveChangesAsync();
+            await _documentSession.SaveChangesAsync();
         }
 
         public void Dispose()
@@ -528,17 +520,17 @@ namespace AspNet.Identity.RavenDB.Stores
 
         // IUserTwoFactorStore
 
-        public Task<bool> GetTwoFactorEnabledAsync(TUser user)
+        public async Task<bool> GetTwoFactorEnabledAsync(TUser user)
         {
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            return Task.FromResult(user.IsTwoFactorEnabled);
+            return await Task.FromResult(user.IsTwoFactorEnabled);
         }
 
-        public Task SetTwoFactorEnabledAsync(TUser user, bool enabled)
+        public async Task SetTwoFactorEnabledAsync(TUser user, bool enabled)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -552,7 +544,7 @@ namespace AspNet.Identity.RavenDB.Stores
                 user.DisableTwoFactorAuthentication();
             }
 
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
 
         // Dispose

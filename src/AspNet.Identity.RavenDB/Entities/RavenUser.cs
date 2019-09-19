@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Security.Claims;
 using Microsoft.AspNet.Identity;
 using Raven.Imports.Newtonsoft.Json;
@@ -9,13 +8,13 @@ namespace AspNet.Identity.RavenDB.Entities
 {
     public class RavenUser : IUser
     {
-        private List<RavenUserClaim> _claims;
-        private List<RavenUserLogin> _logins;
+        List<RavenUserClaim> _claims;
+        List<RavenUserLogin> _logins;
 
         [JsonConstructor]
         public RavenUser(string userName)
         {
-            if (userName == null) throw new ArgumentNullException("userName");
+            if (userName == null) throw new ArgumentNullException(nameof(userName));
 
             Id = GenerateKey(userName);
             UserName = userName;
@@ -28,7 +27,7 @@ namespace AspNet.Identity.RavenDB.Entities
             Email = email;
         }
 
-        public string Id { get; private set; }
+        public string Id { get; }
         public string UserName { get; set; }
         public string Email { get; private set; }
         public string PhoneNumber { get; private set; }
@@ -42,10 +41,7 @@ namespace AspNet.Identity.RavenDB.Entities
 
         public IEnumerable<RavenUserClaim> Claims
         {
-            get
-            {
-                return _claims;
-            }
+            get => _claims;
 
             private set
             {
@@ -59,10 +55,7 @@ namespace AspNet.Identity.RavenDB.Entities
         }
         public IEnumerable<RavenUserLogin> Logins
         {
-            get
-            {
-                return _logins;
-            }
+            get => _logins;
 
             private set
             {
@@ -134,7 +127,7 @@ namespace AspNet.Identity.RavenDB.Entities
         {
             if (claim == null)
             {
-                throw new ArgumentNullException("claim");
+                throw new ArgumentNullException(nameof(claim));
             }
 
             AddClaim(new RavenUserClaim(claim));
@@ -144,7 +137,7 @@ namespace AspNet.Identity.RavenDB.Entities
         {
             if (ravenUserClaim == null)
             {
-                throw new ArgumentNullException("ravenUserClaim");
+                throw new ArgumentNullException(nameof(ravenUserClaim));
             }
 
             _claims.Add(ravenUserClaim);
@@ -154,7 +147,7 @@ namespace AspNet.Identity.RavenDB.Entities
         {
             if (ravenUserClaim == null)
             {
-                throw new ArgumentNullException("ravenUserClaim");
+                throw new ArgumentNullException(nameof(ravenUserClaim));
             }
 
             _claims.Remove(ravenUserClaim);
@@ -164,7 +157,7 @@ namespace AspNet.Identity.RavenDB.Entities
         {
             if (ravenUserLogin == null)
             {
-                throw new ArgumentNullException("ravenUserLogin");
+                throw new ArgumentNullException(nameof(ravenUserLogin));
             }
 
             _logins.Add(ravenUserLogin);
@@ -174,7 +167,7 @@ namespace AspNet.Identity.RavenDB.Entities
         {
             if (ravenUserLogin == null)
             {
-                throw new ArgumentNullException("ravenUserLogin");
+                throw new ArgumentNullException(nameof(ravenUserLogin));
             }
 
             _logins.Remove(ravenUserLogin);

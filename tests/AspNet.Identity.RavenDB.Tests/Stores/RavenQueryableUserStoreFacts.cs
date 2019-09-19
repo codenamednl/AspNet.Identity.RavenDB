@@ -30,7 +30,7 @@ namespace AspNet.Identity.RavenDB.Tests.Stores
                 //{
                     // Act
                     //ses.Advanced.UseOptimisticConcurrency = true;
-                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(store);
+                    RavenUserStore<RavenUser> userStore = new RavenUserStore<RavenUser>(store, "");
                     RavenUser retrievedUser = await userStore.Users.FirstOrDefaultAsync(user => user.UserName == userNameToSearch);
 
                     // Assert

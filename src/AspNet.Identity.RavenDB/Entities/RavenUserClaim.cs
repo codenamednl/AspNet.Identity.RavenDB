@@ -8,7 +8,7 @@ namespace AspNet.Identity.RavenDB.Entities
     {
         public RavenUserClaim(Claim claim)
         {
-            if (claim == null) throw new ArgumentNullException("cl" + "aim");
+            if (claim == null) throw new ArgumentNullException(nameof(claim));
 
             ClaimType = claim.Type;
             ClaimValue = claim.Value;
@@ -17,14 +17,11 @@ namespace AspNet.Identity.RavenDB.Entities
         [JsonConstructor]
         public RavenUserClaim(string claimType, string claimValue)
         {
-            if (claimType == null) throw new ArgumentNullException(nameof(claimType));
-            if (claimValue == null) throw new ArgumentNullException(nameof(claimValue));
-
-            ClaimType = claimType;
-            ClaimValue = claimValue;
+            ClaimType = claimType ?? throw new ArgumentNullException(nameof(claimType));
+            ClaimValue = claimValue ?? throw new ArgumentNullException(nameof(claimValue));
         }
 
-        public string ClaimType { get; private set; }
-        public string ClaimValue { get; private set; }
+        public string ClaimType { get; }
+        public string ClaimValue { get; }
     }
 }
